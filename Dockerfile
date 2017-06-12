@@ -25,7 +25,7 @@ RUN echo 'deb http://packages.erlang-solutions.com/debian jessie contrib' > /etc
 
 # install Erlang
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
 		erlang-asn1 \
 		erlang-base-hipe \
 		erlang-crypto \
@@ -36,7 +36,10 @@ RUN apt-get update \
 		erlang-os-mon \
 		erlang-public-key \
 		erlang-ssl \
-		erlang-xmerl
+		erlang-xmerl \
+    logrotate socat \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # get logs to stdout (thanks @dumbbell for pushing this upstream! :D)
 ENV RABBITMQ_LOGS=- RABBITMQ_SASL_LOGS=-
@@ -51,8 +54,7 @@ RUN apt-get install -y --no-install-recommends logrotate
 
 RUN wget http://www.rabbitmq.com/releases/rabbitmq-server/v${RABBITMQ_VERSION}/rabbitmq-server_${RABBITMQ_DEBIAN_VERSION}_all.deb \
   && dpkg -i rabbitmq-server_${RABBITMQ_DEBIAN_VERSION}_all.deb \
-  && apt-get purge -y --auto-remove ca-certificates wget \
-  && rm -rf /var/lib/apt/lists/*
+  && apt-get purge -y --auto-remove ca-certificates wget
 
 # /usr/sbin/rabbitmq-server has some irritating behavior, and only exists to "su - rabbitmq /usr/lib/rabbitmq/bin/rabbitmq-server ..."
 ENV PATH /usr/lib/rabbitmq/bin:$PATH
